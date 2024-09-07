@@ -1,7 +1,9 @@
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toggleMenu } from "../Utils/appSlice";
 import { useEffect, useState } from "react";
 import { YOUTUBE_SEARCH_API } from "../Utils/constants";
+import { cacheResults } from "../Utils/searchSlice";
+import { json } from "react-router-dom";
 
 const Head = () => {
     const [searchText, setSearchText] = useState('');
@@ -11,10 +13,18 @@ const Head = () => {
     const handletoggle = () =>{
         dispatch(toggleMenu());
     }
- 
+    
+    const searchCache = useSelector(store=>store.search);
+
     useEffect(()=>{
         
-        const timer = setTimeout(()=> fetchSearchResults(),200);
+        const timer = setTimeout(()=> {
+            if(searchCache[searchText]){
+                setSearchResults(searchCache[searchText])
+            } else {
+                fetchSearchResults()
+            }
+        },200);
 
         return(()=>clearTimeout(timer));
 
@@ -26,7 +36,11 @@ const Head = () => {
         const jsondata = await data.json();
         console.log(jsondata[1]);
         setSearchResults(jsondata[1]);
-    }
+        dispatch(cacheResults({
+            [searchText]:jsondata[1],
+        }));
+    };
+  
 
     return (
         <div className="grid grid-flow-col shadow-md m-2 p-2">
